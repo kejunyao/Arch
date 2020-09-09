@@ -197,6 +197,15 @@ public final class FileUtils {
         return files;
     }
 
+    /**
+     * 是否为本地文件
+     * @param source 文件来源
+     * @return true，本地文件；false，非本地文件
+     */
+    public static boolean isLocalFile(String source) {
+        return new File(source).exists();
+    }
+
     public static void closeSafely(Closeable closeable) {
         if (closeable != null) {
             try {
