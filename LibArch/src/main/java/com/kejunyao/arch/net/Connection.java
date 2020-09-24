@@ -29,8 +29,8 @@ import java.util.TreeMap;
 
 public class Connection {
 
-    private static final boolean DEBUG = false;
-    private static final String TAG = "KK_Connection";
+    private static boolean DEBUG = false;
+    private static final String TAG = "Arc-HttpConnection";
 
     private static final String CONTENT_LENGTH = "Content-Length";
     private static final String CONTENT_TYPE   = "Content-Type";
@@ -100,6 +100,10 @@ public class Connection {
             appendUrlString = appendUrlString.substring(1);
         }
         return contact(baseUrlString, "/", appendUrlString);
+    }
+
+    public static void setDebug(boolean debug) {
+        DEBUG = debug;
     }
 
     private void init(URL url) {

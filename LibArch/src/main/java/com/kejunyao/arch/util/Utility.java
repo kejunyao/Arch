@@ -125,6 +125,18 @@ public final class Utility {
         return sb.toString();
     }
 
+    public static <T> String[] toStringArray(List<T> list) {
+        if (isNullOrEmpty(list)) {
+            return null;
+        }
+        final int size = list.size();
+        String[] result = new String[size];
+        for (int i = 0; i < size; i++) {
+            result[i] = list.get(i).toString();
+        }
+        return result;
+    }
+
     public static boolean isTrue(Integer i, int v) {
         return i != null && i.intValue() == v;
     }

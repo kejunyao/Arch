@@ -42,7 +42,7 @@ public final class PermissionUtils {
      * @param permission 指定的权限标志
      * @return true，有权限；false，无权限
      */
-    private static boolean hasPermission(Context context, String permission) {
+    public static boolean hasPermission(Context context, String permission) {
         return ContextCompat.checkSelfPermission(context, permission) == PERMISSION_GRANTED;
     }
 
