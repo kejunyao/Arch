@@ -3,11 +3,15 @@ package com.kejunyao.arch.file;
 import android.content.Context;
 import android.text.TextUtils;
 import com.kejunyao.arch.util.Utility;
+
+import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
@@ -206,6 +210,81 @@ public final class FileUtils {
         return new File(source).exists();
     }
 
+    /**
+     * 读取文件内容为byte[]
+     * @param file {@link File}
+     * @return byte[]
+     */
+    public static byte[] getBytesFromFile(File file) {
+        byte[] bytes = null;
+        FileInputStream fis = null;
+        try {
+            fis = new FileInputStream(file);
+            bytes = getBytesFromInputStream(fis);
+        } catch (FileNotFoundException e) {
+        } finally {
+            if (fis != null) {
+                try {
+                    fis.close();
+                } catch (Exception e) {
+                }
+            }
+            return bytes;
+        }
+    }
+
+    /**
+     * 读取文件中的文本
+     * @param file {@link File}
+     * @return 文本
+     */
+    public static String getStringFromFile(File file) {
+        byte[] bytes = getBytesFromFile(file);
+        if (bytes == null) {
+            return null;
+        }
+        return new String(bytes);
+    }
+
+    /**
+     * 读取{@link InputStream}为byte[]
+     * @param inputStream {@link InputStream}
+     * @return byte[]
+     */
+    public static byte[] getBytesFromInputStream(InputStream inputStream) {
+        if (inputStream == null) {
+            return null;
+        }
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        try {
+            byte[] buffer = new byte[1024]; // SUPPRESS CHECKSTYLE
+            do {
+                int len = 0;
+                try {
+                    len = inputStream.read(buffer, 0, buffer.length);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                if (len != -1) {
+                    bos.write(buffer, 0, len);
+                } else {
+                    break;
+                }
+            } while (true);
+        } catch (Exception e) {
+        } finally {
+            try {
+                bos.close();
+            } catch (IOException e) {
+            }
+        }
+        return bos.toByteArray();
+    }
+
+    /**
+     * 安全关闭
+     * @param closeable {@link Closeable}
+     */
     public static void closeSafely(Closeable closeable) {
         if (closeable != null) {
             try {
