@@ -72,6 +72,8 @@ public class Connection {
     private byte[] mPostData;
     private String mContentType;
 
+    private HttpURLConnection mHttpURLConnection;
+
     public Connection(String baseUrlString, String appendUrlString) {
         this(connect(baseUrlString, appendUrlString));
     }
@@ -386,8 +388,6 @@ public class Connection {
             if (DEBUG) {
                 d("innerRequest, hosted connection url: ", retryUrl);
             }
-            HttpURLConnection conn = null;
-
             URL currUrl;
             try {
                 currUrl = new URL(retryUrl);
@@ -399,48 +399,48 @@ public class Connection {
             }
 
             try {
-                conn = (HttpURLConnection) currUrl.openConnection();
-                conn.setConnectTimeout(CONNECT_TIMEOUT);
+                mHttpURLConnection = (HttpURLConnection) currUrl.openConnection();
+                mHttpURLConnection.setConnectTimeout(CONNECT_TIMEOUT);
                 if (mNetworkAgent != null && mNetworkAgent.isInWifiNetwork()) {
-                    conn.setReadTimeout(WIFI_READ_TIMEOUT);
+                    mHttpURLConnection.setReadTimeout(WIFI_READ_TIMEOUT);
                 } else {
-                    conn.setReadTimeout(GPRS_READ_TIMEOUT);
+                    mHttpURLConnection.setReadTimeout(GPRS_READ_TIMEOUT);
                 }
 
                 if (mNeedCustomHeader) {
-                    adjustCustomHeader(conn, currUrl.getHost());
+                    adjustCustomHeader(mHttpURLConnection, currUrl.getHost());
                 }
 
                 if (mUseGet) {
-                    conn.setRequestMethod(REQ_METHOD_GET);
-                    conn.setDoOutput(false);
+                    mHttpURLConnection.setRequestMethod(REQ_METHOD_GET);
+                    mHttpURLConnection.setDoOutput(false);
                 } else {
-                    conn.setRequestMethod(REQ_METHOD_POST);
-                    conn.setDoOutput(true);
-                    conn.setUseCaches(false);
+                    mHttpURLConnection.setRequestMethod(REQ_METHOD_POST);
+                    mHttpURLConnection.setDoOutput(true);
+                    mHttpURLConnection.setUseCaches(false);
                     if (mPostData != null && mPostData.length > 0) {
-                        conn.setRequestProperty(CONTENT_LENGTH, Integer.toString(mPostData.length));
+                        mHttpURLConnection.setRequestProperty(CONTENT_LENGTH, Integer.toString(mPostData.length));
                     }
                     if (!TextUtils.isEmpty(mContentType)) {
-                        conn.setRequestProperty(CONTENT_TYPE, mContentType);
+                        mHttpURLConnection.setRequestProperty(CONTENT_TYPE, mContentType);
                     }
                 }
                 try {
-                    conn = onConnectionCreated(conn);
+                    mHttpURLConnection = onConnectionCreated(mHttpURLConnection);
                 } catch (ConnectionException e) {
                     return e.mError;
                 }
-                conn.connect();
+                mHttpURLConnection.connect();
                 // post data
                 if (!mUseGet && mPostData != null && mPostData.length > 0) {
-                    OutputStream out = conn.getOutputStream();
+                    OutputStream out = mHttpURLConnection.getOutputStream();
                     out.write(mPostData);
                     out.close();
                 }
 
-                int responseCode = conn.getResponseCode();
+                int responseCode = mHttpURLConnection.getResponseCode();
                 mResponseCode = responseCode;
-                mResponseHeader = conn.getHeaderFields();
+                mResponseHeader = mHttpURLConnection.getHeaderFields();
                 if (mCookieAgent != null && mResponseHeader != null) {
                     for (String key : mResponseHeader.keySet()) {
                         if (key != null && SET_COOKIE.equalsIgnoreCase(key)) {
@@ -458,7 +458,7 @@ public class Connection {
                     if (outputStream != null) {
                         BufferedInputStream bis = null;
                         try {
-                            bis = new BufferedInputStream(conn.getInputStream(), 8192);
+                            bis = new BufferedInputStream(mHttpURLConnection.getInputStream(), 8192);
                             byte[] buffer = new byte[BUFFER_SIZE];
                             int count;
                             while ((count = bis.read(buffer, 0, BUFFER_SIZE)) > 0) {
@@ -478,7 +478,7 @@ public class Connection {
                     }
                 } else {
                     try {
-                        InputStream is = conn.getInputStream();
+                        InputStream is = mHttpURLConnection.getInputStream();
                         closeQuietly(is);
                     } catch (IOException ignored) {
                     }
@@ -491,13 +491,33 @@ public class Connection {
                     e(e, "innerRequest, Connection Exception for ", currUrl.getHost(), " : ");
                 }
             } finally {
-                if (conn != null) {
-                    conn.disconnect();
+                if (mHttpURLConnection != null) {
+                    mHttpURLConnection.disconnect();
+                    mHttpURLConnection = null;
                 }
             }
         }
         // 执行到这里说明网络有问题，一个都没有成功
         return NetworkError.NETWORK_ERROR;
+    }
+
+    /**
+     * 取消请求
+     */
+    public void cancelRequest() {
+        if (mHttpURLConnection != null) {
+            boolean success = false;
+            try {
+                closeQuietly(mHttpURLConnection.getInputStream());
+                mHttpURLConnection.disconnect();
+                success = true;
+            } catch (Exception e) {
+            } finally {
+                if (!success) {
+                    mHttpURLConnection.disconnect();
+                }
+            }
+        }
     }
 
     /**

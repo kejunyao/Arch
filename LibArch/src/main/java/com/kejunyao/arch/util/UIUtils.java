@@ -1,7 +1,9 @@
 package com.kejunyao.arch.util;
 
 import android.app.Activity;
+import android.content.Context;
 import android.graphics.Paint;
+import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.view.View;
 import android.view.ViewGroup;
@@ -249,4 +251,39 @@ public final class UIUtils {
         }
     }
 
+    public static String getString(Context context, int resId) {
+        return context.getResources().getString(resId);
+    }
+
+    public static int getDimensionPixelSize(Context context, int resId) {
+        return context.getResources().getDimensionPixelSize(resId);
+    }
+
+    public static int getInteger(Context context, int resId) {
+        return context.getResources().getInteger(resId);
+    }
+
+    public static String[] getStringArray(Context context, int resId) {
+        return context.getResources().getStringArray(resId);
+    }
+
+    public static int[] getIntArray(Context context, int resId) {
+        return context.getResources().getIntArray(resId);
+    }
+
+    public static int getIdentifier(Context context, String name, String defType) {
+        return context.getResources().getIdentifier(name, defType, context.getPackageName());
+    }
+
+    public static int getColor(Context context, int resId) {
+        return context.getResources().getColor(resId);
+    }
+
+    public static String getColor(Context context, int id, Object... formatArgs) {
+        return context.getResources().getString(id, formatArgs);
+    }
+
+    public static Drawable getDrawable(Context context, int id) {
+        return context.getResources().getDrawable(id);
+    }
 }
